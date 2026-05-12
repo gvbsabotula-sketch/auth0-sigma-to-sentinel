@@ -1,0 +1,28 @@
+name: One-Time Auth0 Conversion
+on: workflow_dispatch
+
+jobs:
+  convert:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Clone Auth0 Repository
+        uses: actions/checkout@v4
+        with:
+          repository: auth0/auth0-customer-detections
+          path: auth0_source
+
+      - name: Install Sigma-CLI
+       run: |
+          pip install sigma-cli
+          sigma plugin install kusto
+
+      - name: Convert All Rules
+        run: |
+          # This command uses the pipeline.yml found in the cloned folder
+          sigma convert -t kusto -p auth0_source/pipeline.yml auth0_source/detections/ -o sentinel_rules.txt
+
+      - name: Upload Results
+        uses: actions/upload-artifact@v4
+        with:
+          name: auth0-sentinel-queries
+          path: sentinel_rules.txt
